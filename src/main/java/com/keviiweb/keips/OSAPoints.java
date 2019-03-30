@@ -89,7 +89,7 @@ public class OSAPoints {
                     return totalOsaPoints + totalBonusPoints;
                 }
             }
-            return totalOsaPoints;
+            return totalOsaPoints + totalBonusPoints;
         } else if (sem == 2) {
             System.out.println(ccaList);
             this.haveContrasting = true;

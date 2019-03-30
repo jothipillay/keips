@@ -19,7 +19,7 @@ public class Student {
     protected List<BonusCCA> bonusCcaList;
     private OSAPoints osaPoints;
     private boolean haveContrasting;
-    private String magicNumber;
+
 
 
     public Student(String matric, String magicNumber, String name, String sex, String semester) {
