@@ -20,3 +20,8 @@
 .idea/modules
 
 *.class
+
+sheets/
+sheet/
+*.xlsx
+*.json

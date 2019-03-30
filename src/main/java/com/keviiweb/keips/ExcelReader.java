@@ -35,6 +35,7 @@ public class ExcelReader {
     private StudentManager manager;
 
     public static final String MASTER_FILE = "READDATA.txt";
+    private static final String ROOM_DRAW_FILE = "roomdraw_points_ay1819.xlsx";
     public static final String DIRECTORY_SHEET = "sheets/";
     public static final int EXCELSHEET_MAIN_INDEX = 0;
     public static final int EXCELSHEET_BONUS_INDEX = 1;
@@ -71,6 +72,7 @@ public class ExcelReader {
                     BufferedReader br = new BufferedReader(reader);
                     String s = br.readLine();
                     parseResidentList(DIRECTORY_SHEET + s);
+                    parseRoomDrawFile(DIRECTORY_SHEET + ROOM_DRAW_FILE);
                     s = br.readLine();
                     while (s != null) {
                         parseFile(DIRECTORY_SHEET +s);
@@ -92,7 +94,7 @@ public class ExcelReader {
             //print to a json object and file
             if (fileName.equals("printtojson")) {
                 String json = manager.printasjson();
-                System.out.println(json);
+                //System.out.println(json);
 
                 try {
                     Files.write(Paths.get("output.json"), json.getBytes());
@@ -109,9 +111,9 @@ public class ExcelReader {
                     FileOutputStream outFile = new FileOutputStream(new File("output.xlsx"));
                     Workbook outWorkbook = new XSSFWorkbook();
                     Sheet sheet = outWorkbook.createSheet();
-                    List<Student> students = manager.getAllStudents();
-                    for (int i = 0; i < students.size(); i++) {
-                        addStudentToSheet(students.get(i), sheet, i);
+                    List<Student> sortedList = manager.getSortedList();
+                    for (int i = 0; i < sortedList.size(); i++) {
+                        addStudentToSheet(sortedList.get(i), sheet, i);
                     }
                     outWorkbook.write(outFile);
                     workbook.close();
@@ -159,6 +161,7 @@ public class ExcelReader {
             return false;
         }
 
+        System.out.println("Parsing resident list...");
         Iterator<Sheet> sheetIterator = workbook.sheetIterator();
         if (sheetIterator.hasNext()) {
             Sheet sheet = sheetIterator.next();
@@ -226,6 +229,7 @@ public class ExcelReader {
             return false;
         }
 
+        System.out.println("Parsing sheet: " + fileName);
         Iterator<Sheet> sheetiterator = workbook.sheetIterator();
 
         //parse the first sheet of data
@@ -270,6 +274,10 @@ public class ExcelReader {
             while (cellIterator.hasNext()) {
                 Cell currentCell = cellIterator.next();
                 String cellText = formatter.formatCellValue(currentCell);
+                // stops reading when cell is marked
+                if (cellText.equals("done")) {
+                    return true;
+                }
                 nameRow.add(cellText);
             }
             if (nameRow.size() > 2) {
@@ -280,14 +288,75 @@ public class ExcelReader {
         return true;
     }
 
+    private boolean parseRoomDrawFile(String fileName) {
+        try {
+            excelFile = new FileInputStream(new File(fileName));
+            workbook = WorkbookFactory.create(excelFile);
+            formatter = new DataFormatter();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        } catch (InvalidFormatException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        System.out.println("Parsing room draw file: " + fileName);
+        Iterator<Sheet> sheetIterator = workbook.sheetIterator();
+        if (sheetIterator.hasNext()) {
+            Sheet sheet = sheetIterator.next();
+            Iterator<Row> rowIterator = sheet.iterator();
+            rowIterator.next();
+
+            while (rowIterator.hasNext()) {
+                Row currentRow = rowIterator.next();
+                //create an iterator for the row
+                Iterator<Cell> cellIterator = currentRow.iterator();
+                List<String> nameRow = new ArrayList<>();
+
+                while (cellIterator.hasNext()) {
+                    Cell currentCell = cellIterator.next();
+                    String cellText = formatter.formatCellValue(currentCell);
+                    nameRow.add(cellText);
+                }
+                manager.ProcessStudentRoomDraw(nameRow);
+            }
+        }
+
+        try {
+            excelFile.close();
+        } catch (IOException e) {
+            System.out.println(e);
+        }
+
+        return true;
+    }
+
     //adds a student to a xlsx workbook sheet in the specified index
     private void addStudentToSheet(Student student, Sheet sheet, int index) {
+        student.setPercentile(student.getRank());
+
         Row row = sheet.createRow(index);
         Cell cell = row.createCell(0);
         cell.setCellValue(student.getMagicNumber());
 
         cell = row.createCell(1);
+        cell.setCellValue(student.getName());
+
+        cell = row.createCell(2);
+        cell.setCellValue(student.getOSAPoints());
+
+        cell = row.createCell(3);
         cell.setCellValue(student.getTotalPoints());
+
+        cell = row.createCell(4);
+        cell.setCellValue(student.getRank());
+
+        cell = row.createCell(5);
+        cell.setCellValue(student.getPercentile());
     }
 
 }

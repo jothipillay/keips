@@ -9,6 +9,8 @@ import com.google.gson.Gson;
  * Student class to represent each student's details and his/her list of CCAs.
  */
 public class Student {
+    public static final int TOTAL_RESIDENTS = 438;
+
     private String matric;
     private String magicNumber;
     private String name;
@@ -19,7 +21,10 @@ public class Student {
     protected List<BonusCCA> bonusCcaList;
     private OSAPoints osaPoints;
     private boolean haveContrasting;
-
+    private int oldRoomDrawPoints;
+    private int newRoomDrawPoints;
+    private int osaPointsCount;
+    private double percentile;
 
 
     public Student(String matric, String magicNumber, String name, String sex, String semester) {
@@ -30,6 +35,8 @@ public class Student {
         this.gender = Gender.getGender(sex);
         this.ccaList = new ArrayList<>();
         this.bonusCcaList = new ArrayList<>();
+        this.oldRoomDrawPoints = 0;
+        this.newRoomDrawPoints = 0;
     }
 
     public Student(String matric, String magicNumber, String name, String sex, String semester, int ranking) {
@@ -52,8 +59,14 @@ public class Student {
         this.ccaList = toClone.ccaList;
         this.bonusCcaList = toClone.bonusCcaList;
         this.ranking = toClone.ranking;
+        this.osaPointsCount = calculateOsaPoints();
+        this.oldRoomDrawPoints = toClone.oldRoomDrawPoints;
+        this.newRoomDrawPoints = toClone.oldRoomDrawPoints + calculateTotalPoints();
+        System.out.println(calculateOsaPoints());
+        this.osaPoints = null;
     }
 
+    // Used for testing
     public Student(String semester) {
         this.semester = semester;
         this.ccaList = new ArrayList<>();
@@ -105,7 +118,7 @@ public class Student {
 
         for(int i = 0; i < this.ccaList.size(); i++) {
             if(this.ccaList.get(i).getTotalPoints() > 17) {
-                System.out.println("Error in points input");
+                System.out.println("Student exceeds 17 points. Student is: " + this.name);
                 return -1;
             }
         }
@@ -136,6 +149,16 @@ public class Student {
 	  return String.valueOf(calculateTotalPoints());
 	}
 
+	public String getOSAPoints() { return String.valueOf(this.osaPointsCount); }
+
+    public String getPercentile() { return String.valueOf(this.percentile); }
+
+	public void setOldRoomDrawPoints(int points) {
+        this.oldRoomDrawPoints = points;
+        String s = String.format("Added %d points to %s", oldRoomDrawPoints, getName());
+        System.out.println(s);
+    }
+
 	public int calculateTotalPoints() {
     	int i = 0;
     	for (CCA cca : ccaList) {
@@ -146,6 +169,14 @@ public class Student {
 		}
 		return i;
 	}
+
+	public void setPercentile(int rank) {
+        double totalResidents = TOTAL_RESIDENTS;
+        double result = ((totalResidents - rank + 1) / totalResidents) * 100;
+        String s = String.format("Rank %d, percentile: %f", rank, result);
+        //System.out.println(s);
+        this.percentile = result;
+    }
 }
 
 enum Gender {
